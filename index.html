@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reportes ACM - SEGURA EP</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .print\:hidden {
+                display: none !important;
+            }
+            .print\:shadow-none {
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        const ACMReportGenerator = () => {
+          const [formData, setFormData] = useState({
+            nombreCompleto: '',
+            cedula: '',
+            distrito: '',
+            zona: '',
+            circuito: '',
+            direccion: '',
+            horarioJornada: '',
+            horaReporte: '',
+            fecha: new Date().toISOString().split('T')[0],
+            novedad: '',
+            reporta: ''
+          });
+
+          const [selectedLeyes, setSelectedLeyes] = useState({});
+          const [showReport, setShowReport] = useState(false);
+
+          // Iconos SVG
+          const FileTextIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          );
+
+          const PlusIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          );
+
+          const XIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          );
+
+          // Datos de Guayaquil organizados por zonas
+          const zonasGuayaquil = {
+            'Norte': {
+              distritos: ['Tarqui', 'Ximena', 'Febres Cordero'],
+              circuitos: ['N1', 'N2', 'N3', 'N4', 'N5', 'N6', 'N7', 'N8']
+            },
+            'Sur': {
+              distritos: ['Urdaneta', 'Letamendi', 'García Moreno'],
+              circuitos: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']
+            },
+            'Centro': {
+              distritos: ['Rocafuerte', 'Bolívar', 'Sucre', '9 de Octubre'],
+              circuitos: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
+            },
+            'Oeste': {
+              distritos: ['Ayacucho', 'Olmedo', 'Roca'],
+              circuitos: ['O1', 'O2', 'O3', 'O4', 'O5', 'O6', 'O7', 'O8']
+            },
+            'Este': {
+              distritos: ['Carbo', 'Chongón'],
+              circuitos: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6']
+            }
+          };
+
+          const leyesNormas = {
+            'COIP - Código Orgánico Integral Penal': [
+              'Art. 205 - Ocupación, uso indebido de suelo o tránsito de vía pública',
+              'Art. 207 - Invasión de áreas de importancia ecológica o de uso público',
+              'Art. 282 - Destrucción de señalización de tránsito',
+              'Art. 389 - Comercialización ilícita de productos',
+              'Art. 393 - Venta de productos en mal estado',
+              'Art. 398 - Contaminación del ambiente'
+            ],
+            'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana': [
+              'Art. 45 - Atribuciones del Control Municipal',
+              'Art. 46 - Control del espacio público',
+              'Art. 47 - Prevención de infracciones',
+              'Art. 48 - Colaboración con autoridades',
+              'Art. 52 - Uso progresivo de la fuerza',
+              'Art. 163 - Régimen disciplinario'
+            ],
+            'Constitución del Ecuador': [
+              'Art. 23 - Derecho a la libertad de expresión y opinión',
+              'Art. 66 - Derecho a la inviolabilidad de domicilio',
+              'Art. 76 - Derecho al debido proceso',
+              'Art. 82 - Derecho a la seguridad jurídica',
+              'Art. 240 - Gobiernos Autónomos Descentralizados',
+              'Art. 264 - Competencias exclusivas de los gobiernos municipales'
+            ],
+            'Ordenanza Municipal de Control y Espacio Público': [
+              'Art. 3 - Uso adecuado del espacio público',
+              'Art. 5 - Prohibición de venta ambulante no autorizada',
+              'Art. 6 - Prohibición de construcciones no autorizadas',
+              'Art. 8 - Control de establecimientos comerciales',
+              'Art. 9 - Áreas verdes y parques',
+              'Art. 12 - Sanciones por ocupación indebida del espacio público',
+              'Art. 13 - Mobiliario urbano',
+              'Art. 15 - Horarios de funcionamiento de comercios',
+              'Art. 16 - Propaganda y publicidad en vía pública',
+              'Art. 18 - Requisitos para permisos de funcionamiento',
+              'Art. 20 - Permisos para eventos en espacios públicos',
+              'Art. 22 - Procedimiento de decomiso'
+            ],
+            'Ley Orgánica de Transporte Terrestre': [
+              'Art. 211 - Estacionamiento en vía pública',
+              'Art. 215 - Vehículos abandonados',
+              'Art. 140 - Transporte comercial no autorizado',
+              'Art. 142 - Zonas de carga y descarga',
+              'Art. 385 - Sanciones por mal estacionamiento',
+              'Art. 389 - Obstaculización de vía pública'
+            ],
+            'Ordenanza de Convivencia Ciudadana': [
+              'Art. 4 - Respeto al espacio público',
+              'Art. 7 - Prohibición de ruidos molestos',
+              'Art. 10 - Consumo de bebidas alcohólicas en vía pública',
+              'Art. 14 - Alteración del orden público',
+              'Art. 18 - Limpieza y ornato de la ciudad',
+              'Art. 25 - Maltrato animal en espacios públicos'
+            ]
+          };
+
+          const handleInputChange = (e) => {
+            const { name, value } = e.target;
+            
+            if (name === 'nombreCompleto') {
+              const onlyLetters = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+              setFormData({
+                ...formData,
+                [name]: onlyLetters.toUpperCase()
+              });
+            } else if (name === 'cedula') {
+              const onlyNumbers = value.replace(/[^0-9]/g, '');
+              setFormData({
+                ...formData,
+                [name]: onlyNumbers
+              });
+            } else {
+              setFormData({
+                ...formData,
+                [name]: value
+              });
+            }
+          };
+
+          const handleZonaChange = (e) => {
+            setFormData({
+              ...formData,
+              zona: e.target.value,
+              distrito: '',
+              circuito: ''
+            });
+          };
+
+          const toggleLey = (ley) => {
+            setSelectedLeyes(prev => {
+              const newSelected = { ...prev };
+              if (newSelected[ley]) {
+                delete newSelected[ley];
+              } else {
+                newSelected[ley] = [];
+              }
+              return newSelected;
+            });
+          };
+
+          const toggleArticulo = (ley, articulo) => {
+            setSelectedLeyes(prev => {
+              const newSelected = { ...prev };
+              if (!newSelected[ley]) {
+                newSelected[ley] = [articulo];
+              } else {
+                if (newSelected[ley].includes(articulo)) {
+                  newSelected[ley] = newSelected[ley].filter(a => a !== articulo);
+                  if (newSelected[ley].length === 0) {
+                    delete newSelected[ley];
+                  }
+                } else {
+                  newSelected[ley] = [...newSelected[ley], articulo];
+                }
+              }
+              return newSelected;
+            });
+          };
+
+          const generateReport = () => {
+            setShowReport(true);
+          };
+
+          const printReport = () => {
+            window.print();
+          };
+
+          if (showReport) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-400 to-white p-4">
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-white rounded-lg shadow-2xl p-8 print:shadow-none" id="report">
+                    <div className="border-4 border-gray-800 p-6">
+                      <h1 className="text-center text-xl font-bold mb-2">
+                        CUERPO AGENTE DE CONTROL MUNICIPAL
+                      </h1>
+                      <h2 className="text-center text-lg font-bold mb-6">
+                        REPORTE DE ENCARGADO DE CUADRA
+                      </h2>
+                      
+                      <div className="space-y-2 mb-6">
+                        <p><span className="font-bold">Zona:</span> [{formData.zona}]</p>
+                        <p><span className="font-bold">Distrito:</span> [{formData.distrito}]</p>
+                        <p><span className="font-bold">Circuito:</span> [{formData.circuito}]</p>
+                        <p><span className="font-bold">Dirección:</span> [{formData.direccion}]</p>
+                        <p><span className="font-bold">Horario:</span> [{formData.horarioJornada}]</p>
+                        <p><span className="font-bold">Hora:</span> [{formData.horaReporte}]</p>
+                        <p><span className="font-bold">Fecha:</span> [{formData.fecha}]</p>
+                      </div>
+
+                      <div className="mb-6">
+                        <p className="font-bold mb-2">Novedad:</p>
+                        <p className="text-justify">
+                          Permiso, Señor Carlos Segovia Álava, Jefe de Control Municipal:
+                          Muy respetuosamente, me permito informarle que en la presente fecha.
+                        </p>
+                      </div>
+
+                      <div className="mb-6">
+                        <p className="font-bold mb-2">Reporta:</p>
+                        <p className="italic">[ACM {formData.reporta}]</p>
+                      </div>
+
+                      <div className="mb-6">
+                        <p className="font-bold mb-2">Descripción de la Novedad:</p>
+                        <p className="text-justify whitespace-pre-wrap">{formData.novedad}</p>
+                      </div>
+
+                      {Object.keys(selectedLeyes).length > 0 && (
+                        <div className="mb-6">
+                          <p className="font-bold mb-3">Leyes y Normas Aplicables:</p>
+                          {Object.entries(selectedLeyes).map(([ley, articulos], index) => (
+                            <div key={index} className="mb-4">
+                              <p className="font-bold text-sm mb-2">{ley}</p>
+                              {articulos.length > 0 && (
+                                <ul className="list-disc list-inside space-y-1 ml-4">
+                                  {articulos.map((art, idx) => (
+                                    <li key={idx} className="text-sm">{art}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-8">
+                        <p className="font-bold">"Lealtad, Valor y Orden"</p>
+                        <p className="text-sm mt-2">Adjunto Fotografía</p>
+                      </div>
+
+                      <div className="mt-8 text-center">
+                        <p className="font-bold">Agente de Control Municipal</p>
+                        <p className="mt-1">{formData.nombreCompleto}</p>
+                        <p className="text-sm">C.I.: {formData.cedula}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 mt-6 print:hidden">
+                    <button
+                      onClick={printReport}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                    >
+                      <FileTextIcon />
+                      Imprimir Reporte
+                    </button>
+                    <button
+                      onClick={() => setShowReport(false)}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200"
+                    >
+                      Volver al Formulario
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-400 to-white p-4 relative overflow-hidden">
+              <div 
+                className="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-10"
+                style={{
+                  backgroundImage: "url('https://i.ibb.co/HVBK8mK/image.png')",
+                  backgroundSize: '80%',
+                  backgroundPosition: 'center'
+                }}
+              />
+              
+              <div className="max-w-6xl mx-auto relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <img 
+                    src="https://pbs.twimg.com/media/GgTaNCGWsAAXSvm?format=jpg&name=large" 
+                    alt="ACM Logo" 
+                    className="w-32 h-32 object-contain"
+                  />
+                  <img 
+                    src="https://i.ibb.co/fDYpczW/image.png" 
+                    alt="Alcaldía de Guayaquil" 
+                    className="w-48 h-32 object-contain"
+                  />
+                </div>
+
+                <div className="bg-white rounded-lg shadow-2xl p-8 mb-6">
+                  <h1 className="text-4xl font-bold text-center text-blue-900 mb-2">
+                    SEGURA EP PRM XVI
+                  </h1>
+                  <p className="text-center text-gray-600 mb-8">
+                    Sistema de Generación de Reportes - Control Municipal
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <h2 className="text-xl font-bold text-blue-900 mb-4">Información del Agente</h2>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Nombre Completo *
+                          </label>
+                          <input
+                            type="text"
+                            name="nombreCompleto"
+                            value={formData.nombreCompleto}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none uppercase"
+                            placeholder="JUAN PÉREZ GARCÍA"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Cédula *
+                          </label>
+                          <input
+                            type="text"
+                            name="cedula"
+                            value={formData.cedula}
+                            onChange={handleInputChange}
+                            maxLength="10"
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            placeholder="0912345678"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <h2 className="text-xl font-bold text-blue-900 mb-4">Ubicación y Horario</h2>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Zona *
+                          </label>
+                          <select
+                            name="zona"
+                            value={formData.zona}
+                            onChange={handleZonaChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                          >
+                            <option value="">Seleccione una zona</option>
+                            {Object.keys(zonasGuayaquil).map((zona) => (
+                              <option key={zona} value={zona}>{zona}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Distrito *
+                          </label>
+                          <select
+                            name="distrito"
+                            value={formData.distrito}
+                            onChange={handleInputChange}
+                            disabled={!formData.zona}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
+                          >
+                            <option value="">Seleccione un distrito</option>
+                            {formData.zona && zonasGuayaquil[formData.zona].distritos.map((distrito) => (
+                              <option key={distrito} value={distrito}>{distrito}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Circuito *
+                          </label>
+                          <select
+                            name="circuito"
+                            value={formData.circuito}
+                            onChange={handleInputChange}
+                            disabled={!formData.zona}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
+                          >
+                            <option value="">Seleccione un circuito</option>
+                            {formData.zona && zonasGuayaquil[formData.zona].circuitos.map((circuito) => (
+                              <option key={circuito} value={circuito}>{circuito}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Dirección *
+                          </label>
+                          <input
+                            type="text"
+                            name="direccion"
+                            value={formData.direccion}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            placeholder="Ej. Lorenzo de Garaicoa y Clemente Ballen"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Horario de Jornada *
+                          </label>
+                          <input
+                            type="text"
+                            name="horarioJornada"
+                            value={formData.horarioJornada}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            placeholder="Ej. 09H00 - 15H30"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Hora de Reporte *
+                          </label>
+                          <input
+                            type="text"
+                            name="horaReporte"
+                            value={formData.horaReporte}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            placeholder="Ej. 09H00"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Fecha *
+                          </label>
+                          <input
+                            type="date"
+                            name="fecha"
+                            value={formData.fecha}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Reporta (Nombre/Código)
+                          </label>
+                          <input
+                            type="text"
+                            name="reporta"
+                            value={formData.reporta}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            placeholder="Ej. Victor Pluas R."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <h2 className="text-xl font-bold text-blue-900 mb-4">Descripción de la Novedad</h2>
+                      
+                      <textarea
+                        name="novedad"
+                        value={formData.novedad}
+                        onChange={handleInputChange}
+                        rows="6"
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                        placeholder="Describa detalladamente la novedad observada..."
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <h2 className="text-xl font-bold text-blue-900 mb-4">Leyes y Normas Aplicables</h2>
+                      <p className="text-sm text-gray-600 mb-4">Seleccione las leyes y sus artículos aplicables a la novedad</p>
+                      
+                      <div className="space-y-4">
+                        {Object.entries(leyesNormas).map(([ley, articulos], index) => (
+                          <div key={index} className="border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <div
+                              onClick={() => toggleLey(ley)}
+                              className={`p-4 cursor-pointer transition duration-200 ${
+                                selectedLeyes[ley]
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold">{ley}</span>
+                                {selectedLeyes[ley] ? <XIcon /> : <PlusIcon />}
+                              </div>
+                            </div>
+                            
+                            {selectedLeyes[ley] && (
+                              <div className="bg-white p-4 border-t-2 border-gray-200">
+                                <p className="text-sm font-semibold text-gray-700 mb-3">Seleccione los artículos aplicables:</p>
+                                <div className="space-y-2">
+                                  {articulos.map((articulo, artIndex) => (
+                                    <div
+                                      key={artIndex}
+                                      onClick={() => toggleArticulo(ley, articulo)}
+                                      className={`p-3 rounded border-2 cursor-pointer transition duration-200 ${
+                                        selectedLeyes[ley]?.includes(articulo)
+                                          ? 'bg-blue-100 border-blue-500 text-blue-900'
+                                          : 'border-gray-200 hover:border-blue-300 text-gray-700'
+                                      }`}
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <div className={`mt-1 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                          selectedLeyes[ley]?.includes(articulo)
+                                            ? 'bg-blue-600 border-blue-600'
+                                            : 'border-gray-400'
+                                        }`}>
+                                          {selectedLeyes[ley]?.includes(articulo) && (
+                                            <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                          )}
+                                        </div>
+                                        <span className="text-sm">{articulo}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={generateReport}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition duration-200 text-lg flex items-center justify-center gap-2"
+                    >
+                      <FileTextIcon />
+                      Generar Reporte
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-center mt-6 mb-4">
+                  <img 
+                    src="https://i.ibb.co/Tm0MpYz/image.png" 
+                    alt="SEGURA EP" 
+                    className="mx-auto w-48 mb-2"
+                  />
+                  <p className="text-xs text-white">TODOS LOS DERECHOS RESERVADOS (©)</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // Renderizar la aplicación
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ACMReportGenerator />);
+    </script>
+</body>
+</html>
