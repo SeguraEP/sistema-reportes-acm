@@ -16,6 +16,9 @@
             .print\:shadow-none {
                 box-shadow: none !important;
             }
+            .print\:break-inside-avoid {
+    break-inside: avoid !important;
+}
         }
     </style>
 </head>
@@ -42,6 +45,7 @@
 
           const [selectedLeyes, setSelectedLeyes] = useState({});
           const [showReport, setShowReport] = useState(false);
+            const [imagenes, setImagenes] = useState([]);
 
           // Iconos SVG
           const FileTextIcon = () => (
@@ -67,6 +71,20 @@
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           );
+            const ImageIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+    <polyline points="21 15 16 10 5 21"></polyline>
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
 
           // Datos de Guayaquil organizados por zonas
           const zonasGuayaquil = {
@@ -172,6 +190,29 @@
               circuito: ''
             });
           };
+            const handleImageUpload = (e) => {
+  const files = Array.from(e.target.files);
+  
+  files.forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagenes(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          src: event.target.result,
+          name: file.name
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  e.target.value = '';
+};
+
+const removeImage = (id) => {
+  setImagenes(prev => prev.filter(img => img.id !== id));
+};
 
           const toggleLey = (ley) => {
             setSelectedLeyes(prev => {
@@ -252,6 +293,26 @@
                         <p className="font-bold mb-2">Descripción de la Novedad:</p>
                         <p className="text-justify whitespace-pre-wrap">{formData.novedad}</p>
                       </div>
+                        {imagenes.length > 0 && (
+  <div className="mb-6 print:break-inside-avoid">
+    <p className="font-bold mb-3">Evidencia Fotográfica:</p>
+    <div className="grid grid-cols-2 gap-4">
+      {imagenes.map((imagen, index) => (
+        <div key={imagen.id} className="border-2 border-gray-300 p-2 rounded">
+          <img 
+            src={imagen.src} 
+            alt={`Evidencia ${index + 1}`}
+            className="w-full h-auto object-contain rounded"
+            style={{maxHeight: '300px'}}
+          />
+          <p className="text-xs text-center mt-2 text-gray-600">
+            Fotografía {index + 1}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
                       {Object.keys(selectedLeyes).length > 0 && (
                         <div className="mb-6">
@@ -509,6 +570,54 @@
                         placeholder="Describa detalladamente la novedad observada..."
                       />
                     </div>
+                      <div className="bg-blue-50 p-6 rounded-lg">
+  <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+    <ImageIcon />
+    Adjuntar Evidencia Fotográfica
+  </h2>
+  <p className="text-sm text-gray-600 mb-4">Puede adjuntar múltiples imágenes como evidencia</p>
+
+  <div className="mb-4">
+    <label className="w-full flex flex-col items-center px-4 py-6 bg-white border-2 border-dashed border-blue-400 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200">
+      <ImageIcon />
+      <span className="mt-2 text-base font-semibold text-blue-600">
+        Seleccionar Imágenes
+      </span>
+      <span className="mt-1 text-sm text-gray-500">
+        JPG, PNG, GIF (máx. 5MB por imagen)
+      </span>
+      <input
+        type="file"
+        className="hidden"
+        accept="image/*"
+        multiple
+        onChange={handleImageUpload}
+      />
+    </label>
+  </div>
+
+  {imagenes.length > 0 && (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {imagenes.map((imagen) => (
+        <div key={imagen.id} className="relative group">
+          <img 
+            src={imagen.src} 
+            alt={imagen.name}
+            className="w-full h-32 object-cover rounded-lg border-2 border-gray-300"
+          />
+          <button
+            onClick={() => removeImage(imagen.id)}
+            className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition duration-200"
+            title="Eliminar imagen"
+          >
+            <TrashIcon />
+          </button>
+          <p className="text-xs text-gray-600 mt-1 truncate">{imagen.name}</p>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
                     <div className="bg-blue-50 p-6 rounded-lg">
                       <h2 className="text-xl font-bold text-blue-900 mb-4">Leyes y Normas Aplicables</h2>
