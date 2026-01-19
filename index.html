@@ -597,7 +597,7 @@ const removeImage = (id) => {
   </div>
 
   {imagenes.length > 0 && (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {imagenes.map((imagen) => (
         <div key={imagen.id} className="relative group">
           <img 
@@ -619,8 +619,8 @@ const removeImage = (id) => {
   )}
 </div>
 
-                    <div className="bg-blue-50 p-6 rounded-lg">
-                      <h2 className="text-xl font-bold text-blue-900 mb-4">Leyes y Normas Aplicables</h2>
+                    <div className="bg-blue-50 p-4 md:p-6 rounded-lg">
+                      <h2 className="text-lg md:text-xl font-bold text-blue-900 mb-4">Leyes y Normas Aplicables</h2>
                       <p className="text-sm text-gray-600 mb-4">Seleccione las leyes y sus artículos aplicables a la novedad</p>
 
                       <div className="space-y-4">
