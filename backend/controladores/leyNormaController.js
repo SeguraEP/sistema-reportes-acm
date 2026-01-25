@@ -121,25 +121,55 @@ static async obtenerLeyesNormas(req, res) {
   }
 
   // Obtener categorías disponibles
-  static async obtenerCategorias(req, res) {
-    try {
-      console.log('Obteniendo categorías de leyes/normas');
+static async obtenerCategorias(req, res) {
+  try {
+    console.log('Obteniendo categorías de leyes/normas');
 
-      const categorias = await LeyNormaModel.obtenerCategorias();
-
-      res.json({
-        success: true,
-        data: categorias
-      });
-
-    } catch (error) {
-      console.error('Error obteniendo categorías:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error al obtener categorías'
-      });
+    // Verificar si hay usuario, pero permitir acceso público
+    // Solo log para debugging
+    if (req.usuario) {
+      console.log('Usuario autenticado:', req.usuario.id);
+    } else {
+      console.log('Acceso público a categorías');
     }
+
+    const categorias = await LeyNormaModel.obtenerCategorias();
+
+    res.json({
+      success: true,
+      data: categorias || [] // Asegurar que siempre sea un array
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo categorías:', error);
+    
+    // En caso de error, devolver array vacío
+    res.json({
+      success: true,
+      data: []
+    });
   }
+}
+// Obtener categorías públicas (sin autenticación)
+static async obtenerCategoriasPublico(req, res) {
+  try {
+    console.log('Obteniendo categorías públicas');
+
+    const categorias = await LeyNormaModel.obtenerCategorias();
+
+    res.json({
+      success: true,
+      data: categorias || []
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo categorías públicas:', error);
+    res.json({
+      success: true,
+      data: []
+    });
+  }
+}
 
   // Obtener artículos de una ley/norma
   static async obtenerArticulos(req, res) {

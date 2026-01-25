@@ -217,7 +217,8 @@ export default function HojaVidaPage() {
   const [dialogConfirmarGuardar, setDialogConfirmarGuardar] = useState(false);
   const [expandedFormacion, setExpandedFormacion] = useState<number | false>(0);
   const [expandedExperiencia, setExpandedExperiencia] = useState<number | false>(0);
-  
+  const [showDownloadAlert, setShowDownloadAlert] = useState(false);
+const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'word' | null>(null);
   const { 
     control, 
     handleSubmit, 
@@ -563,30 +564,67 @@ formacion_academica: hojaVidaData.hoja_vida.formacion_academica
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+const handleGuardar = async (data: HojaVidaFormData) => {
+  try {
+    setLoadingGuardar(true);
+    setError('');
+    setSuccess('');
 
-  const handleGuardar = async (data: HojaVidaFormData) => {
-    try {
-      setLoadingGuardar(true);
-      setError('');
-      setSuccess('');
+    console.log('Guardando hoja de vida:', data);
 
-      console.log('Guardando hoja de vida:', data);
+    // Asegurar que los datos estén en el formato correcto
+    const datosParaGuardar = {
+      datos_personales: {
+        ...data.datos_personales,
+        telefono: data.datos_personales.telefono || '',
+        email: data.datos_personales.email || ''
+      },
+      formacion_academica: data.formacion_academica.map(item => ({
+        ...item,
+        anio_inicio: item.anio_inicio || '',
+        anio_fin: item.anio_fin || '',
+        anio_graduacion: item.anio_graduacion || ''
+      })),
+      experiencia_laboral: data.experiencia_laboral.map(item => ({
+        ...item,
+        funciones: Array.isArray(item.funciones) ? item.funciones : [],
+        logros: Array.isArray(item.logros) ? item.logros : []
+      })),
+      cursos_capacitaciones: data.cursos_capacitaciones,
+      habilidades: {
+        tecnicas: Array.isArray(data.habilidades.tecnicas) ? data.habilidades.tecnicas : [],
+        blandas: Array.isArray(data.habilidades.blandas) ? data.habilidades.blandas : [],
+        idiomas: data.habilidades.idiomas
+      },
+      referencias: data.referencias,
+      informacion_adicional: {
+        ...data.informacion_adicional,
+        tipo_licencia: data.informacion_adicional.tipo_licencia || '',
+        tipo_discapacidad: data.informacion_adicional.tipo_discapacidad || ''
+      }
+    };
 
-      const hojaVidaGuardada = await UsuarioService.guardarHojaVida(data);
-      setHojaVida(hojaVidaGuardada);
-      
-      setSuccess('Hoja de vida guardada exitosamente');
-      setEditMode(false);
-      setDialogConfirmarGuardar(false);
+    console.log('Datos procesados para guardar:', datosParaGuardar);
 
-    } catch (error: any) {
-      console.error('Error guardando hoja de vida:', error);
-      setError('Error al guardar la hoja de vida. Por favor intenta nuevamente.');
-    } finally {
-      setLoadingGuardar(false);
-    }
-  };
+    const hojaVidaGuardada = await UsuarioService.guardarHojaVida(datosParaGuardar);
+    setHojaVida(hojaVidaGuardada);
+    
+    setSuccess('Hoja de vida guardada exitosamente');
+    setEditMode(false);
+    setDialogConfirmarGuardar(false);
 
+    // Recargar datos para asegurar consistencia
+    setTimeout(() => {
+      cargarDatos();
+    }, 1000);
+
+  } catch (error: any) {
+    console.error('Error guardando hoja de vida:', error);
+    setError(error.message || 'Error al guardar la hoja de vida. Por favor intenta nuevamente.');
+  } finally {
+    setLoadingGuardar(false);
+  }
+};
   const handleCancelarEdicion = () => {
     if (hojaVida) {
       reset(hojaVida);
@@ -612,52 +650,61 @@ formacion_academica: hojaVidaData.hoja_vida.formacion_academica
       setLoading(false);
     }
   };
-
-  const handleDescargar = async (formato: 'pdf' | 'word') => {
-    try {
-      if (!usuario?.id) return;
-
-      if (formato === 'pdf') {
-        const blob = await UsuarioService.descargarHojaVidaPDF(usuario.id);
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `hoja-vida-${usuario.nombre_completo}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } else {
-        const blob = await UsuarioService.descargarHojaVidaWord(usuario.id);
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `hoja-vida-${usuario.nombre_completo}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }
-
-      setDialogDescargarOpen(false);
-    } catch (error) {
-      console.error('Error descargando hoja de vida:', error);
-      setError('Error al descargar la hoja de vida.');
+const handleDescargar = async (formato: 'pdf' | 'word') => {
+  try {
+    if (!usuario?.id) return;
+    
+    // Verificar si los datos personales están completos
+    const datosPersonales = getValues('datos_personales');
+    const tieneDatosMinimos = datosPersonales.nombres_completos && 
+                             datosPersonales.cedula && 
+                             (datosPersonales.direccion || datosPersonales.nacionalidad);
+    
+    if (!tieneDatosMinimos) {
+      // Mostrar alerta y guardar el formato para descargar después
+      setDownloadFormat(formato);
+      setShowDownloadAlert(true);
+      return;
     }
-  };
+    
+    // Proceder con la descarga
+    await procederConDescarga(formato);
 
-  const handleExportar = async (formatos: string[]) => {
-    try {
-      if (!usuario?.id) return;
+  } catch (error) {
+    console.error('Error descargando hoja de vida:', error);
+    setError('Error al descargar la hoja de vida.');
+  }
+};
 
-      const data = await UsuarioService.exportarHojaVida(usuario.id, formatos);
-      console.log('Hoja de vida exportada:', data);
-      setSuccess('Hoja de vida exportada exitosamente');
-    } catch (error) {
-      console.error('Error exportando hoja de vida:', error);
-      setError('Error al exportar la hoja de vida.');
-    }
-  };
+// Método para proceder con la descarga después del alert
+const procederConDescarga = async (formato: 'pdf' | 'word') => {
+  if (!usuario?.id) return;
+  
+  if (formato === 'pdf') {
+    const blob = await UsuarioService.descargarHojaVidaPDF(usuario.id);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoja-vida-${usuario.nombre_completo}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } else {
+    const blob = await UsuarioService.descargarHojaVidaWord(usuario.id);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoja-vida-${usuario.nombre_completo}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+  
+  setDialogDescargarOpen(false);
+};
+
 
   const agregarHabilidadTecnica = () => {
     const nuevaHabilidad = prompt('Ingresa una nueva habilidad técnica:');
@@ -781,55 +828,56 @@ formacion_academica: hojaVidaData.hoja_vida.formacion_academica
                 </Box>
               </Box>
             </Grid>
-           <Grid size={{ xs: 12, md: 6}}>
-
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                {!editMode ? (
-                  <>
-                    <Button
-                      variant="outlined"
-                      startIcon={<EditIcon />}
-                      onClick={() => setEditMode(true)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<DescriptionIcon />}
-                      onClick={() => setDialogDescargarOpen(true)}
-                    >
-                      Descargar
-                    </Button>
-                    
-                    <Tooltip title="Refrescar">
-                      <IconButton onClick={cargarDatos}>
-                        <RefreshIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="outlined"
-                      startIcon={<CancelIcon />}
-                      onClick={handleCancelarEdicion}
-                      color="error"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<SaveIcon />}
-                      onClick={() => setDialogConfirmarGuardar(true)}
-                      disabled={!isDirty}
-                    >
-                      Guardar
-                    </Button>
-                  </>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
+           <Grid size={{ xs: 12, md: 6 }}>
+  <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+    {!editMode ? (
+      <>
+        <Button
+          variant="outlined"
+          startIcon={<EditIcon />}
+          onClick={() => setEditMode(true)}
+        >
+          Editar
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<DescriptionIcon />}
+          onClick={() => setDialogDescargarOpen(true)}
+        >
+          Descargar
+        </Button>
+        
+        <Tooltip title="Refrescar">
+          <IconButton onClick={cargarDatos}>
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
+      </>
+    ) : (
+      <>
+        <Button
+          variant="outlined"
+          startIcon={<CancelIcon />}
+          onClick={handleCancelarEdicion}
+          color="error"
+          type="button"
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          startIcon={<SaveIcon />}
+          form="hojaVidaForm"
+          disabled={!isDirty || loadingGuardar}
+          onClick={() => setDialogConfirmarGuardar(true)} // O elimina esto
+        >
+          {loadingGuardar ? 'Guardando...' : 'Guardar'}
+        </Button>
+      </>
+    )}
+  </Box>
+</Grid></Grid>
         </Paper>
       </Box>
 
@@ -854,7 +902,7 @@ formacion_academica: hojaVidaData.hoja_vida.formacion_academica
         </Tabs>
       </Box>
 
-        <form onSubmit={handleSubmit(handleGuardar)}>
+        <form id="hojaVidaForm" onSubmit={handleSubmit(handleGuardar)}>
           {/* Tab 1: Información Personal */}
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
@@ -1907,56 +1955,128 @@ formacion_academica: hojaVidaData.hoja_vida.formacion_academica
         </form>
       </Paper>
 
-      {/* Diálogo para descargar */}
-      <Dialog open={dialogDescargarOpen} onClose={() => setDialogDescargarOpen(false)}>
-        <DialogTitle>Descargar Hoja de Vida</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Selecciona el formato en el que deseas descargar tu hoja de vida:
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-                    <Grid size={{ xs:12 }}>
+     {/* Diálogo para descargar */}
+<Dialog open={dialogDescargarOpen} onClose={() => setDialogDescargarOpen(false)}>
+  <DialogTitle>Descargar Hoja de Vida</DialogTitle>
+  <DialogContent>
+    <Typography variant="body2" color="text.secondary" gutterBottom>
+      Selecciona el formato en el que deseas descargar tu hoja de vida:
+    </Typography>
+    <Grid container spacing={2} sx={{ mt: 2 }}>
 
+      <Grid size={{ xs:12 }}>
+        <Button
+          variant="outlined"
+          startIcon={<DescriptionIcon />}
+          onClick={() => handleDescargar('word')}
+          fullWidth
+          sx={{ justifyContent: 'flex-start' }}
+        >
+          Descargar como Word (DOCX)
+        </Button>
+      </Grid>
+    </Grid>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setDialogDescargarOpen(false)}>Cancelar</Button>
+  </DialogActions>
+</Dialog>
 
-            </Grid>
-                    <Grid size={{ xs:12 }}>
-
-              <Button
-                variant="outlined"
-                startIcon={<DescriptionIcon />}
-                onClick={() => handleDescargar('word')}
-                fullWidth
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Descargar como Word (DOCX)
-              </Button>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogDescargarOpen(false)}>Cancelar</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de confirmación para guardar */}
-      <Dialog open={dialogConfirmarGuardar} onClose={() => setDialogConfirmarGuardar(false)}>
-        <DialogTitle>Confirmar Guardado</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            ¿Estás seguro de guardar los cambios en tu hoja de vida?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogConfirmarGuardar(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleSubmit(handleGuardar)} 
-            variant="contained"
-            disabled={loadingGuardar}
-          >
-            {loadingGuardar ? 'Guardando...' : 'Guardar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+{/* Diálogo de alerta para datos incompletos */}
+<Dialog open={showDownloadAlert} onClose={() => setShowDownloadAlert(false)}>
+  <DialogTitle>
+    <Alert severity="warning" sx={{ mb: 2 }}>
+      ¡Atención!
+    </Alert>
+  </DialogTitle>
+  <DialogContent>
+    <Typography variant="body1" gutterBottom>
+      RECUERDE: AL MENOS LLENAR SUS DATOS PERSONALES
+    </Typography>
+    <Typography variant="body2" color="text.secondary" paragraph>
+      En el caso de que no haya llenado los datos de al menos DIRECCIÓN o NACIONALIDAD, 
+      el usuario no podrá descargar el archivo correctamente.
+    </Typography>
+    <Typography variant="body2" color="error" paragraph>
+      Por favor, complete los siguientes campos obligatorios:
+    </Typography>
+    <List dense>
+      <ListItem>
+        <ListItemText primary="✅ Nombres Completos" />
+      </ListItem>
+      <ListItem>
+        <ListItemText primary="✅ Cédula" />
+      </ListItem>
+      <ListItem>
+        <ListItemText 
+          primary="📌 Dirección (al menos uno de estos dos)" 
+          secondary={watch('datos_personales.direccion') ? "✓ Completado" : "✗ Faltante"}
+        />
+      </ListItem>
+      <ListItem>
+        <ListItemText 
+          primary="📌 Nacionalidad (al menos uno de estos dos)" 
+          secondary={watch('datos_personales.nacionalidad') ? "✓ Completado" : "✗ Faltante"}
+        />
+      </ListItem>
+    </List>
+    <Alert severity="info" sx={{ mt: 2 }}>
+      Puede completar estos datos en la pestaña "Información Personal"
+    </Alert>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setShowDownloadAlert(false)}>
+      Cancelar
+    </Button>
+    <Button 
+      onClick={() => {
+        setEditMode(true);
+        setTabValue(0); // Ir a la pestaña de Información Personal
+        setShowDownloadAlert(false);
+      }}
+      variant="outlined"
+      color="primary"
+    >
+      Completar Datos
+    </Button>
+    <Button 
+      onClick={async () => {
+        if (downloadFormat) {
+          await procederConDescarga(downloadFormat);
+        }
+        setShowDownloadAlert(false);
+      }}
+      variant="contained"
+      color="warning"
+    >
+      Descargar de Todas Formas
+    </Button>
+  </DialogActions>
+</Dialog>
+{/* Diálogo de confirmación para guardar */}
+<Dialog open={dialogConfirmarGuardar} onClose={() => setDialogConfirmarGuardar(false)}>
+  <DialogTitle>Confirmar Guardado</DialogTitle>
+  <DialogContent>
+    <Typography variant="body2" color="text.secondary">
+      ¿Estás seguro de guardar los cambios en tu hoja de vida?
+    </Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setDialogConfirmarGuardar(false)}>Cancelar</Button>
+    <Button 
+      onClick={async () => {
+        // Obtener los datos del formulario
+        const formData = getValues();
+        await handleGuardar(formData);
+        setDialogConfirmarGuardar(false);
+      }}
+      variant="contained"
+      disabled={loadingGuardar}
+    >
+      {loadingGuardar ? 'Guardando...' : 'Guardar'}
+    </Button>
+  </DialogActions>
+</Dialog>
     </Container>
   );
 }

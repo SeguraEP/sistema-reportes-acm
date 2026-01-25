@@ -157,23 +157,31 @@ static async obtenerTodasConConteo() {
   }
 
   // Obtener categorías
-  static async obtenerCategorias() {
-    try {
-      const { data, error } = await supabase
-        .from('leyes_normas')
-        .select('categoria')
-        .order('categoria', { ascending: true });
+  // Obtener categorías
+static async obtenerCategorias() {
+  try {
+    const { data, error } = await supabase
+      .from('leyes_normas')
+      .select('categoria')
+      .order('categoria', { ascending: true });
 
-      if (error) throw error;
-      
-      // Obtener categorías únicas
-      const categorias = [...new Set(data.map(item => item.categoria))];
-      return categorias;
-    } catch (error) {
-      console.error('Error en LeyNormaModel.obtenerCategorias:', error);
-      throw error;
+    if (error) {
+      console.error('Error en Supabase obtenerCategorias:', error);
+      return []; // Retornar array vacío en caso de error
     }
+    
+    // Obtener categorías únicas
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    const categorias = [...new Set(data.map(item => item.categoria).filter(Boolean))];
+    return categorias;
+  } catch (error) {
+    console.error('Error en LeyNormaModel.obtenerCategorias:', error);
+    return []; // Siempre retornar array vacío en caso de error
   }
+}
 
   // Obtener artículos por ley
   static async obtenerArticulos(leyId) {

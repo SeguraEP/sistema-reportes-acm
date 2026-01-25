@@ -47,11 +47,23 @@ export const LeyNormaService = {
   },
 
   // Obtener categorías
-  async obtenerCategorias(): Promise<string[]> {
+// Obtener categorías
+async obtenerCategorias(): Promise<string[]> {
+  try {
+    // Primero intentar con autenticación
     const response = await api.get('/leyes-normas/categorias');
-    return response.data.data;
-  },
-
+    return response.data.data || [];
+  } catch (error: any) {
+    if (error.response?.status === 401 || error.response?.status === 400) {
+      // Si falla por autenticación, usar la versión pública
+      console.log('Usando ruta pública para categorías');
+      const response = await api.get('/leyes-normas/categorias/publico');
+      return response.data.data || [];
+    }
+    console.error('Error obteniendo categorías:', error);
+    return [];
+  }
+},
   // Obtener artículos de una ley/norma
   async obtenerArticulos(leyId: string): Promise<Articulo[]> {
     const response = await api.get(`/leyes-normas/${leyId}/articulos`);

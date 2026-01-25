@@ -23,7 +23,7 @@ router.post('/reportes/:id/leyes-publico', ReporteController.asociarLeyesReporte
 
 // Rutas públicas para leyes/normas
 router.get('/leyes-normas/publico', LeyNormaController.obtenerLeyesNormasPublico);
-
+router.get('/leyes-normas/categorias/publico', LeyNormaController.obtenerCategoriasPublico);
 // Auth
 router.post('/auth/login', AuthController.login);
 router.post('/auth/register', AuthController.register);
