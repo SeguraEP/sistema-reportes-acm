@@ -1,66 +1,59 @@
-//frontend/src/app/api/auth/[...nextauth]/route.tsx
-
+// frontend/src/app/api/auth/[...nextauth]/route.ts
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { supabase } from '@/lib/supabase';
 
-export const authOptions: NextAuthOptions = {
+// Definición de opciones de NextAuth
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email y contraseña son requeridos');
         }
 
-        try {
-          // Autenticar con Supabase
-          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password
-          });
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
 
-          if (authError || !authData.user) {
-            throw new Error('Credenciales inválidas');
-          }
-
-          // Obtener información adicional del usuario
-          const { data: usuarioData } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
-
-          if (!usuarioData) {
-            throw new Error('Usuario no encontrado');
-          }
-
-          return {
-            id: usuarioData.id,
-            email: usuarioData.email,
-            name: usuarioData.nombre_completo,
-            rol: usuarioData.rol,
-            cedula: usuarioData.cedula,
-            accessToken: authData.session?.access_token,
-            refreshToken: authData.session?.refresh_token
-          };
-        } catch (error: any) {
-          console.error('Error en autorización:', error);
-          throw new Error(error.message || 'Error de autenticación');
+        if (authError || !authData.user) {
+          throw new Error('Credenciales inválidas');
         }
-      }
-    })
+
+        const { data: usuarioData } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (!usuarioData) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        return {
+          id: usuarioData.id,
+          email: usuarioData.email,
+          name: usuarioData.nombre_completo,
+          rol: usuarioData.rol,
+          cedula: usuarioData.cedula,
+          accessToken: authData.session?.access_token,
+          refreshToken: authData.session?.refresh_token,
+        };
+      },
+    }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-    token.email = user.email ?? "";
-    token.name = user.name ?? "";
+        token.email = user.email ?? '';
+        token.name = user.name ?? '';
         token.rol = user.rol;
         token.cedula = user.cedula;
         token.accessToken = user.accessToken;
@@ -77,11 +70,11 @@ export const authOptions: NextAuthOptions = {
           rol: token.rol as string,
           cedula: token.cedula as string,
           accessToken: token.accessToken as string,
-          refreshToken: token.refreshToken as string
+          refreshToken: token.refreshToken as string,
         };
       }
       return session;
-    }
+    },
   },
   pages: {
     signIn: '/login',
@@ -94,6 +87,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+//  Exportación compatible con Next.js 14 App Router
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
