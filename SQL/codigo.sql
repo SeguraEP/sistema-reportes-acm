@@ -468,3 +468,174 @@ CREATE POLICY "Cualquiera puede ver imágenes de reportes" ON imagenes_reportes
 -- Permitir lectura pública de relaciones reportes-leyes
 CREATE POLICY "Cualquiera puede ver relaciones reportes-leyes" ON reportes_leyes_normas
     FOR SELECT USING (true);
+
+
+SELECT * FROM usuarios;
+
+
+-- ==================== ARTÍCULOS DE COIP - PENAL ====================
+INSERT INTO leyes_normas_articulos (ley_norma_id, numero_articulo, contenido, descripcion_corta)
+SELECT id, '45', 'Homicidio doloso', 'Homicidio intencional'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '146', 'Robo agravado', 'Robo con agravantes'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '155', 'Abuso sexual', 'Delitos sexuales'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '181', 'Estafa y fraude', 'Fraude económico'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '194', 'Extorsión', 'Delito de extorsión'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '205', 'Ocupación, uso indebido de suelo o tránsito de vía pública', 'Ocupación indebida de vía pública'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '207', 'Invasión de áreas de importancia ecológica o de uso público', 'Invasión de áreas protegidas'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '212', 'Lesiones personales', 'Daño físico a otra persona'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '218', 'Tráfico de drogas', 'Delitos relacionados con drogas'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+UNION ALL
+SELECT id, '282', 'Destrucción de señalización de tránsito', 'Daño a señalética vial'
+FROM leyes_normas WHERE nombre = 'COIP - Código Orgánico Integral Penal'
+ON CONFLICT DO NOTHING;
+
+-- ==================== ARTÍCULOS DE COESCOP - SEGURIDAD ====================
+INSERT INTO leyes_normas_articulos (ley_norma_id, numero_articulo, contenido, descripcion_corta)
+SELECT id, '45', 'Atribuciones del Control Municipal', 'Funciones y atribuciones del control municipal'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '46', 'Control del espacio público', 'Control y vigilancia del espacio público'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '50', 'Seguridad en eventos masivos', 'Regulación de seguridad en eventos'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '52', 'Funciones de patrullaje', 'Normas sobre patrullaje'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '55', 'Prevención de delitos', 'Acciones preventivas en seguridad'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '60', 'Cooperación con Policía Nacional', 'Colaboración institucional'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '65', 'Control de tránsito y movilidad', 'Supervisión de tránsito'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '70', 'Uso de la fuerza', 'Normas sobre uso de fuerza'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '75', 'Sanciones administrativas', 'Multas y sanciones'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+UNION ALL
+SELECT id, '80', 'Protección de personas vulnerables', 'Medidas de protección'
+FROM leyes_normas WHERE nombre = 'COESCOP - Código Orgánico de las Entidades de Seguridad Ciudadana'
+ON CONFLICT DO NOTHING;
+
+-- ==================== ARTÍCULOS DE CONSTITUCIÓN DEL ECUADOR - CONSTITUCIONAL ====================
+INSERT INTO leyes_normas_articulos (ley_norma_id, numero_articulo, contenido, descripcion_corta)
+SELECT id, '1', 'La soberanía reside en el pueblo', 'Soberanía popular'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '11', 'Derechos de igualdad y no discriminación', 'Igualdad ante la ley'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '66', 'Derecho a la vida', 'Protección de la vida'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '66', 'Derecho a la salud', 'Protección del derecho a la salud'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '70', 'Derecho a la educación', 'Acceso a educación'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '75', 'Derecho a la seguridad social', 'Seguridad social para todos'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '84', 'Libertad de expresión', 'Derecho a la comunicación'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '89', 'Derecho a la información', 'Acceso a información pública'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '96', 'Derecho a la propiedad', 'Propiedad privada'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+UNION ALL
+SELECT id, '98', 'Derecho a un medio ambiente sano', 'Protección ambiental'
+FROM leyes_normas WHERE nombre = 'Constitución del Ecuador'
+ON CONFLICT DO NOTHING;
+
+-- ==================== ARTÍCULOS ORDENANZA MUNICIPAL - MUNICIPAL ====================
+INSERT INTO leyes_normas_articulos (ley_norma_id, numero_articulo, contenido, descripcion_corta)
+SELECT id, '1', 'Regulación del uso de espacio público', 'Uso de espacio público'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '5', 'Normas de publicidad exterior', 'Publicidad en espacios públicos'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '10', 'Protección de parques y plazas', 'Cuidado de parques'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '15', 'Regulación de comercio ambulante', 'Comercio informal'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '20', 'Mantenimiento de aceras y vías', 'Cuidado de calles'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '25', 'Sanciones por incumplimiento', 'Multas y sanciones'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '30', 'Control de ruido', 'Normas de ruido'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '35', 'Seguridad en eventos públicos', 'Eventos seguros'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '40', 'Protección de patrimonio histórico', 'Cuidado del patrimonio'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+UNION ALL
+SELECT id, '45', 'Cooperación con policía municipal', 'Colaboración institucional'
+FROM leyes_normas WHERE nombre = 'Ordenanza Municipal de Control y Espacio Público'
+ON CONFLICT DO NOTHING;
+
+-- ==================== ARTÍCULOS LEY ORGÁNICA DE TRANSPORTE TERRESTRE - TRANSPORTE ====================
+INSERT INTO leyes_normas_articulos (ley_norma_id, numero_articulo, contenido, descripcion_corta)
+SELECT id, '1', 'Regulación de transporte público', 'Normas transporte público'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '10', 'Licencias de conducir', 'Requisitos para licencia'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '15', 'Normas de tránsito', 'Cumplimiento de tránsito'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '20', 'Seguridad vial', 'Medidas de seguridad'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '25', 'Sanciones por infracciones', 'Multas de tránsito'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '30', 'Transporte escolar', 'Normas transporte escolar'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '35', 'Transporte de carga', 'Regulación transporte de carga'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '40', 'Inspección vehicular', 'Control de vehículos'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '45', 'Transporte interprovincial', 'Regulación interprovincial'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+UNION ALL
+SELECT id, '50', 'Cooperación con autoridades', 'Colaboración institucional'
+FROM leyes_normas WHERE nombre = 'Ley Orgánica de Transporte Terrestre'
+ON CONFLICT DO NOTHING;
+
+SELECT * FROM leyes_normas_articulos;
